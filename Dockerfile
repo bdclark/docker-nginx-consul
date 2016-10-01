@@ -19,7 +19,7 @@ RUN set -ex \
 RUN rm -f /etc/nginx/conf.d/default.conf
 
 COPY etc /etc/
-COPY docker-entrypoint.sh /
+COPY docker-entrypoint.sh /entrypoint.sh
 
-ENTRYPOINT ["/docker-entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["consul-template"]
