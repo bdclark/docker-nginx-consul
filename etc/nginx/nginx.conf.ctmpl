@@ -1,0 +1,29 @@
+# Dynamically rendered by consul-template
+{{- $basekey := env "NGINX_CONF_KEY" }}
+
+daemon off;
+user nginx;
+{{- if not (printf "%s/main/error_log" $basekey | key) }}
+error_log stderr error;{{ end }}
+{{- $main := printf "%s/main/" $basekey }}{{ if ls $main }}{{ range ls $main }}
+{{- if and (ne .Key "daemon") (ne .Key "user") }}
+{{ .Key }} {{ .Value }};{{ end }}{{ end }}{{ end }}
+
+events {
+{{- $events := printf "%s/events/" $basekey }}{{ if ls $events }}{{ range ls $events }}
+    {{ .Key }} {{ .Value }};{{ end }}
+{{- end }}
+}
+
+http {
+    include /etc/nginx/mime.types;
+{{- if not (printf "%s/http/access_log" $basekey | key) }}
+    access_log /dev/stdout combined;{{ end }}
+{{- $log_format := printf "%s/http/log_format" $basekey }}{{ if ls $log_format }}{{ range ls $log_format }}
+    log_format {{ .Key }} '{{ .Value }}';{{ end }}{{ end }}
+{{- $http := printf "%s/http/" $basekey }}{{ if ls $http }}{{ range ls $http }}
+    {{ .Key }} {{ .Value }};{{ end }}{{ end }}
+
+    include /etc/nginx/conf.d/*.conf;
+    include /etc/nginx/rendered*;
+}
