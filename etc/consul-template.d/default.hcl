@@ -6,4 +6,4 @@ exec {
   kill_timeout = "30s"
 }
 
-log_level = "error"
+log_level = "ERR"

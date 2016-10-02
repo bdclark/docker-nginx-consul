@@ -25,5 +25,5 @@ http {
     {{ .Key }} {{ .Value }};{{ end }}{{ end }}
 
     include /etc/nginx/conf.d/*.conf;
-    include /etc/nginx/rendered*;
+    include /etc/nginx/rendered/*;
 }
