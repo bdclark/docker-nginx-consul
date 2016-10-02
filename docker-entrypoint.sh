@@ -15,4 +15,9 @@ if [ "$1" = "consul-template" ]; then
   exec consul-template $ARGS "$@"
 fi
 
+if [ "$1" = "config-test" ]; then
+  shift
+  consul-template -exec="/usr/sbin/nginx -t" $ARGS "$@" || exit 1
+fi
+
 exec "$@"
