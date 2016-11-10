@@ -1,28 +1,42 @@
 # Dynamically rendered by consul-template
-{{- $basekey := env "NGINX_CONF_KEY" }}
+{{- $conf_key := env "NGINX_CONF_KEY" }}{{- $common_key := env "NGINX_CONF_COMMON_KEY" }}
 
 daemon off;
 user nginx;
-{{- if not (printf "%s/main/error_log" $basekey | key) }}
+{{- if and (not (printf "%s/main/error_log" $conf_key | key)) (not (printf "%s/main/error_log" $common_key | key)) }}
 error_log stderr error;{{ end }}
-{{- $main := printf "%s/main/" $basekey }}{{ if ls $main }}{{ range ls $main }}
+{{- $main := printf "%s/main/" $common_key }}{{ if ls $main }}{{ range ls $main }}
+{{- if and (ne .Key "daemon") (ne .Key "user") }}
+{{ .Key }} {{ .Value }};{{ end }}{{ end }}{{ end }}
+{{- $main := printf "%s/main/" $conf_key }}{{ if ls $main }}{{ range ls $main }}
 {{- if and (ne .Key "daemon") (ne .Key "user") }}
 {{ .Key }} {{ .Value }};{{ end }}{{ end }}{{ end }}
 
 events {
-{{- $events := printf "%s/events/" $basekey }}{{ if ls $events }}{{ range ls $events }}
+{{- $events := printf "%s/events/" $common_key }}{{ if ls $events }}{{ range ls $events }}
+    {{ .Key }} {{ .Value }};{{ end }}
+{{- end }}
+{{- $events := printf "%s/events/" $conf_key }}{{ if ls $events }}{{ range ls $events }}
     {{ .Key }} {{ .Value }};{{ end }}
 {{- end }}
 }
 
 http {
     include /etc/nginx/mime.types;
-{{- if not (printf "%s/http/access_log" $basekey | key) }}
+{{- if and (not (printf "%s/http/access_log" $conf_key | key)) (not (printf "%s/http/access_log" $common_key | key)) }}
     access_log /dev/stdout combined;{{ end }}
-{{- $log_format := printf "%s/http/log_format" $basekey }}{{ if ls $log_format }}{{ range ls $log_format }}
+{{- $log_format := printf "%s/http/log_format" $common_key }}{{ if ls $log_format }}{{ range ls $log_format }}
     log_format {{ .Key }} '{{ .Value }}';{{ end }}{{ end }}
-{{- $http := printf "%s/http/" $basekey }}{{ if ls $http }}{{ range ls $http }}
+{{- $log_format := printf "%s/http/log_format" $conf_key }}{{ if ls $log_format }}{{ range ls $log_format }}
+    log_format {{ .Key }} '{{ .Value }}';{{ end }}{{ end }}
+{{- $http := printf "%s/http/" $common_key }}{{ if ls $http }}{{ range ls $http }}
     {{ .Key }} {{ .Value }};{{ end }}{{ end }}
+{{- $http := printf "%s/http/" $conf_key }}{{ if ls $http }}{{ range ls $http }}
+    {{ .Key }} {{ .Value }};{{ end }}{{ end }}
+{{- $headers := printf "%s/http/add_header/" $common_key }}{{ if ls $headers }}{{ range ls $headers }}
+    add_header '{{ .Key }}' {{ .Value }};{{ end }}{{ end }}
+{{- $headers := printf "%s/http/add_header/" $conf_key }}{{ if ls $headers }}{{ range ls $headers }}
+    add_header '{{ .Key }}' {{ .Value }};{{ end }}{{ end }}
 
     include /etc/nginx/conf.d/*.conf;
     include /etc/nginx/rendered/*;
